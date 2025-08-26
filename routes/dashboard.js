@@ -1,15 +1,19 @@
 import express from "express";
 
 const router = express.Router();
-import { getDealsNews, getInvestorById, searchInvestor } from "../controllers/dashboardController.js";
+import { filterInvestor, getDealsNews,  getRecentDealsAndNews, RecentDeals } from "../controllers/dashboardController.js";
 import { authenticate } from "../middleware/authenticate.js";
+import Deals from "../models/deals.js";
+import { authorizeRole } from "../middleware/authroizeRole.js";
 
 
-router.get("/investors/:id/recent-deal", authenticate, getInvestorById);
+router.get("/startup-dashboard", authenticate, authorizeRole("startup"), getRecentDealsAndNews);
 
-router.get("/investors", searchInvestor);
+router.get("/investors", filterInvestor);
 
 router.get("/deals-news",getDealsNews);
+
+router.get("/recent-deals",RecentDeals)
 
 // router.post("/add-investor", async (req, res) => {
 
@@ -42,7 +46,7 @@ router.get("/deals-news",getDealsNews);
 
 // })
 
-// router.post("/add-deals", async (req, res) => {
+//router.post("/add-deals", async (req, res) => {
 //     try {
 //         const dealsData = req.body;
 //         const result = await Deals.insert(dealsData);

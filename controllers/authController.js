@@ -5,6 +5,7 @@ import otpQueue from "../queue/otpQueue.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import Orders from "../models/order.js";
+import { callModel } from "../utils/callModel.js";
 
 
 
@@ -24,7 +25,7 @@ export async function sendOtp(req, res) {
       })
     }
 
-    const query = qb().eq("Email", email);
+    const query = qb().eq(User.fields.Email, email);
     const { resources } = await User.find({
       filter: query,
       limit: 1
@@ -137,7 +138,9 @@ export async function verifyOtp(req, res) {
 
     return res.status(201).json({
       message: "User registered and verified successfully",
-      userId: newUser.id
+      userId: newUser.id,
+      UserRole:newUser.Role,
+      token:token
     })
 
 
@@ -163,7 +166,7 @@ export async function login(req, res) {
       })
     }
 
-    const query = qb().eq("Email", email);
+    const query = qb().eq(User.fields.Email, email);
     const { resources } = await User.find({
       filter: query,
       limit: 1
@@ -204,7 +207,7 @@ export async function login(req, res) {
   path: "/",
   secure: true,
   sameSite: "none",
-  domain: ".trycloudflare.com",
+  //  domain: ".trycloudflare.com",
   maxAge: 60 * 60 * 24 * 7 * 1000, // 1 week
   // signed: true,
     });
@@ -212,7 +215,8 @@ export async function login(req, res) {
     return res.status(200).json({
       message: "Login successful",
       UserId: user.id,
-      UserRole:user.Role
+      UserRole:user.Role,
+      token: token
     })
 
   } catch (error) {
@@ -222,7 +226,7 @@ export async function login(req, res) {
   }
 }
 
-export async function profile(req, res) {
+export async function profileSetup(req, res) {
   try {
 
     // if(req.user.role !=="startup"){

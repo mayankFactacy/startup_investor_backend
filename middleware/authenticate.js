@@ -2,23 +2,28 @@ import jwt from "jsonwebtoken";
 
 export const authenticate = (req, res, next) => {
     try {
-        const cookies = req.cookies;
-
-        if (!cookies || Object.keys(cookies).length === 0) {
-            return res.status(401).json({ message: "Unauthorized. No cookies found" });
-        }
-
         let token = null;
         let role = null;
 
-        for (const [key, value] of Object.entries(cookies)) {
+        // const cookies = req.cookies;
 
-            if (typeof value === "string" && value.split(".").length === 3) {
-                token = value;
-                role = key;
-                break;
+        if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+            token = req.headers.authorization.split(" ")[1];
+            console.log("Checked and verified from headers");
+
+        }
+
+        if (!token && req.cookies) {
+            for (const [key, value] of Object.entries(req.cookies)) {
+                if (typeof value === "string" && value.split(".").length === 3) {
+                    token = value;
+                    role = key;
+                    break;
+                }
             }
         }
+
+
 
         if (!token) {
             return res.status(401).json({ message: "Unauthorized. No token found" });
@@ -33,7 +38,9 @@ export const authenticate = (req, res, next) => {
         }
 
         req.user = decoded;
-        req.user.role=role;
+        if (!req.user.role && role) {
+            req.user.role = role;
+        }
         next();
 
 

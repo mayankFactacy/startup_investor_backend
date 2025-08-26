@@ -3,84 +3,187 @@ import Deals from "../models/deals.js";
 import Investors from "../models/investors.js";
 import News from "../models/news.js";
 
-export async function getInvestorById(req, res) {
+// export async function getInvestorById(req, res) {
+//     try {
+//         const { id } = req.params;
+
+//         const investor = await Investors.findById(id);
+
+//         console.log(investor);
+
+
+//         if (!investor) {
+//             return res.status(404).json({
+//                 error: "Investor not found"
+//             })
+//         }
+
+
+//         if (!investor.Investor_Deal_Ids || investor.Investor_Deal_Ids.length === 0) {
+//             return res.status(200).json([]);
+//         }
+
+//         const deals = qb().inArray(Deals.fields.id, investor.Investor_Deal_Ids);
+//         const { resources } = await Deals.find({
+//             filter: deals,
+//             limit: 50
+//         });
+
+//         // deals.sort((deal_dateA, deal_dateB) => deal_dateB.Deal_Date - deal_dateA.Deal_Date);
+
+//         const response = resources.map(deal => ({
+//             Logo_Url: deal.Logo_Url,
+//             Investee: deal.Investee,
+//             ALT_Investee: deal.ALT_Investee,
+//             Deal_Date: deal.Deal_Date,
+//             Sector: deal.Sector
+//         }));
+
+
+
+
+//         res.status(200).json(response);
+
+//     } catch (error) {
+//         console.log(error.stack);
+//         return res.status(500).json({
+//             error: "Internal server error"
+//         })
+//     }
+// }
+
+export async function getRecentDealsAndNews(req, res) {
     try {
-        const { id } = req.params;
+        
+        const { resources: deals } = await Deals.find({
+            fields: {
+                Investee: Deals.fields.Investee,
+                Raised: Deals.fields.Series_Amount,
+                Date: Deals.fields.Deal_Date,
+                Round: Deals.fields.Series_Detected,
+                Logo: Deals.fields.Logo_Url,
+                Sector: Deals.fields.Sector,
+                ALT_Investee: Deals.fields.ALT_Investee
 
-        const investor = await Investors.findById(id);
-
-        console.log(investor);
-
-
-        if (!investor) {
-            return res.status(404).json({
-                error: "Investor not found"
-            })
-        }
+            },
+            // filter:qb().eq(Deals.fields.Sector,)
+            orderBy: qb().order(qb().desc({ name: "__ts" })),
+            limit: 4
+        })
 
 
-        if (!investor.Investor_Deal_Ids || investor.Investor_Deal_Ids.length === 0) {
-            return res.status(200).json([]);
-        }
+        const { resources: news } = await News.find({
+            fields: {
+                id: News.fields.id,
+                art_Id: News.fields.Art_Id,
+                title: News.fields.title,
+                date: News.fields.date,
+                url: News.fields.url,
+                content: News.fields.content
 
-        const deals = qb().inArray("id", investor.Investor_Deal_Ids);
-        const { resources } = await Deals.find({
-            filter: deals,
-            limit: 50
+            },
+            orderBy: qb().order(qb().desc({ name: "__ts" })),
+            limit: 10
         });
 
-        // deals.sort((deal_dateA, deal_dateB) => deal_dateB.Deal_Date - deal_dateA.Deal_Date);
-
-        const response = resources.map(deal => ({
-            Logo_Url: deal.Logo_Url,
-            Investee: deal.Investee,
-            ALT_Investee: deal.ALT_Investee,
-            Deal_Date: deal.Deal_Date,
-            Sector: deal.Sector
-        }));
-
-
-
-
-        res.status(200).json(response);
+        return res.status(200).json({
+            deals: {
+                count: deals.length,
+                data: deals,
+            },
+            news: {
+                count: news.length,
+                data: news
+            }
+        });
 
     } catch (error) {
         console.log(error.stack);
         return res.status(500).json({
             error: "Internal server error"
-        })
+        });
     }
 }
 
-export async function searchInvestor(req, res) {
+
+export async function RecentDeals(req, res) {
+    try {
+        const { resources: deals } = await Deals.find({
+            fields: {
+                Investee: Deals.fields.Investee,
+                Raised: Deals.fields.Series_Amount,
+                Date: Deals.fields.Deal_Date,
+                Round: Deals.fields.Series_Detected,
+                Logo: Deals.fields.Logo_Url,
+                Sector: Deals.fields.Sector,
+                ALT_Investee: Deals.fields.ALT_Investee
+
+            }
+        })
+
+
+        return res.status(200).json({
+            data: deals,
+        })
+
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            error: "Internal server error"
+        })
+
+    }
+}
+
+
+// export async function searchInvestor (req, res){
+//     try {
+
+//         const {name} = req.query;
+
+
+        
+//     } catch (error) {
+//         console.log(error);
+//         return res.status(500)
+//         .json({
+//             error:"Internal Server Error"
+//         })
+        
+        
+//     }
+// }
+
+export async function filterInvestor(req, res) {
     try {
         const { name, sector, type, focus, stage, country, city, page = 1, limit = 20 } = req.query;
 
         let query = qb();
 
-        if (name) query = query.ilike("Investor", name);
-        if (sector) query = query.ilike("Top_Sector", sector);
-        if (type) query = query.inArray("InvestorType", type);
-        if (focus) query = query.inArray("Top_Sector", focus);
+        if (name) query = query.ilike(Investors.fields.Investor, name);
+        if (sector) query = query.ilike(Investors.fields.Top_Sector, sector);
+        if (type) query = query.inArray(Investors.fields.Investor_Type, type);
+        if (focus) query = query.inArray(Investors.fields.Top_Sector, focus);
 
 
         const offset = (parseInt(page) - 1) * parseInt(limit);
         const { resources } = await Investors.find({
+            fields: {
+                Investor: Investors.fields.Investor,
+                InvestorType: Investors.fields.Investor_Type,
+                InvestorBio: Investors.fields.Investor_Bio
+            },
             filter: query,
             limit: parseInt(limit),
             offset
 
         })
 
-        const response = resources.map(investor => ({
-            Investor: investor.Investor,
-            InvestorType: investor.Investor_Type,
-            InvestorBio: investor.Investor_Bio
 
-        }))
 
         return res.status(200).json({
-            response,
+            resources,
             page: parseInt(page),
             limit: parseInt(limit)
         })
@@ -102,28 +205,28 @@ export async function getDealsNews(req, res) {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
-        const { resources } = await News.find({})
-        const sorted = resources.sort((a, b) => {
-            return new Date(b.date) - new Date(a.date);
-        });
+        const { resources: news } = await News.find({
+            fields: {
+                id: News.fields.id,
+                art_Id: News.fields.Art_Id,
+                title: News.fields.title,
+                date: News.fields.date,
+                url: News.fields.url,
+                content: News.fields.content
+            },
+            orderBy: qb().order(qb().desc({ name: "__ts" })),
+            limit: limit,
+            offset: offset
+
+        })
 
 
-        const paginated = sorted.slice(offset, offset + limit);
-
-        const newsData = paginated.map(news=>({
-            id:news.id,
-            art_Id: news.Art_Id,
-            title: news.title,
-            date:news.date,
-            url:news.url,
-            content:news.content
-        }))
 
         return res.status(200).json({
             page,
             limit,
-            count: paginated.length,
-            data: newsData
+            count: news.length,
+            data: news
         });
 
     } catch (error) {

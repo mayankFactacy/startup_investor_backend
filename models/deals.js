@@ -60,7 +60,7 @@ const deals = z.object(
 )
 
 
-const collection = await container.connectCollection("Groot-db", "tieGlobalUser");
+const collection = await container.connectCollection("Groot-db", "deal id");
 const Deals = new Model(deals,collection);
 
 export default Deals

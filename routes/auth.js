@@ -1,9 +1,10 @@
 // const { session } = require("passport");
 // const passport = require("../passport");
 
-import { sendOtp, verifyOtp, login, profile } from "../controllers/authController.js";
+import { sendOtp, verifyOtp, login, profileSetup } from "../controllers/authController.js";
 import express from "express";
 import { authenticate } from "../middleware/authenticate.js";
+import { authorizeRole } from "../middleware/authroizeRole.js";
 const router = express.Router();
 
 // router.get(
@@ -34,7 +35,7 @@ const router = express.Router();
 router.post("/send-otp", sendOtp);
 router.post("/verify-otp", verifyOtp);
 router.post("/login", login);
-router.post("/setup", profile);
+router.post("/setup",authenticate,authorizeRole("startup"), profileSetup);
 // router.get("/getprofile", getProfile);
 
 export default router;
