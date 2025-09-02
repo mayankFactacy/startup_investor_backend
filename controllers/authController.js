@@ -1,7 +1,7 @@
 import User from "../models/user.js";
 import { qb } from "@lakshya004/cosmos-odm";
-// import redis from "../utils/redisClient.js";
-// import otpQueue from "../queue/otpQueue.js";
+import redis from "../utils/redisClient.js";
+import otpQueue from "../queue/otpQueue.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import Orders from "../models/order.js";
@@ -55,7 +55,7 @@ export async function sendOtp(req, res) {
     )
     console.log("Stored in redis:", `otp:${email}`);
 
-    // await otpQueue.add("send-otp", { email, otp });
+    await otpQueue.add("send-otp", { email, otp });
 
     console.log("OTP job added to the queue");
 
