@@ -1,6 +1,6 @@
-import Redis from "ioredis"
-import redisConnection from "../config/redisConnection.js"
+// import Redis from "ioredis"
+// import redisConnection from "../config/redisConnection.js"
 
-const redis = new Redis(redisConnection)
+// const redis = new Redis(redisConnection)
 
-export default redis
+// export default redis

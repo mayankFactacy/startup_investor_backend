@@ -1,6 +1,6 @@
-const { Model } = require("@lakshya004/cosmos-odm");
-const { default: z } = require(zod);
-
+import z from "zod";
+import container from "../db.js";
+import { Model } from "@lakshya004/cosmos-odm";
 
 const brands = z.object({
 
@@ -33,5 +33,4 @@ const brands = z.object({
 const collection = await container.connectCollection("Groot-db", "tieGlobalUser");
 const Brands = new Model(brands, collection);
 
-module.exports = Brands;
-
+export default Brands

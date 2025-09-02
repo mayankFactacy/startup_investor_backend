@@ -2,6 +2,7 @@ import { qb } from "@lakshya004/cosmos-odm";
 import Deals from "../models/deals.js";
 import Investors from "../models/investors.js";
 import News from "../models/news.js";
+import Orders from "../models/order.js";
 
 // export async function getInvestorById(req, res) {
 //     try {
@@ -54,7 +55,7 @@ import News from "../models/news.js";
 
 export async function getRecentDealsAndNews(req, res) {
     try {
-        
+
         const { resources: deals } = await Deals.find({
             fields: {
                 Investee: Deals.fields.Investee,
@@ -143,15 +144,15 @@ export async function RecentDeals(req, res) {
 //         const {name} = req.query;
 
 
-        
+
 //     } catch (error) {
 //         console.log(error);
 //         return res.status(500)
 //         .json({
 //             error:"Internal Server Error"
 //         })
-        
-        
+
+
 //     }
 // }
 
@@ -238,4 +239,79 @@ export async function getDealsNews(req, res) {
 
     }
 
+}
+
+// export async function topInvestors(req, res) {
+//     try {
+
+//         const userId = req.user.id;
+//         const q = qb().eq(Orders.fields.userId, userId);
+//         const { resources: investors } = await Orders.find({
+//             filter: q,
+//             fields: {
+//                 Investor: Orders.fields.Investor,
+//                 Investor_Type: Orders.fields.Investor_Type,
+//                 Average_Similarity: Math.round(Orders.fields.Average_Similarity) + "%"
+
+//             },
+//             limit: 5
+
+//         })
+//         const processedInvestors = investors.map(inv => ({
+//             name: inv.Investor,
+//             type: inv.Investor_Type,
+//             similarity: Math.round(inv.Average_Similarity) + "%"
+//         }));
+
+//         console.log(processedInvestors);
+
+//         return res.status(200).json({
+//             data: processedInvestors,
+//         })
+
+
+//     } catch (error) {
+//         console.log(error.stack);
+//         return res.status(500)
+//             .json({
+//                 error: "Internal server error"
+//             })
+
+//     }
+
+
+// }
+
+export async function topInvestors(req, res) {
+    try {
+        const userId = req.user.id;
+        const q = qb().eq(Orders.fields.userId, userId);
+
+
+        const { resources: orders } = await Orders.find({
+            filter: q,
+            limit: 1, 
+        });
+
+        if (!orders || orders.length === 0) {
+            return res.status(404).json({ data: [], message: "No orders found" });
+        }
+
+        const order = orders[0];
+
+
+       const recommended = (order.Recommended_Investors || [])
+            .slice(0, 5)  
+            .map(inv => ({
+                name: inv.Investor,
+                type: inv.Investor_Type,
+                similarity: Math.round(inv.Average_Similarity) + "%"
+            }));
+
+        return res.status(200).json({ data: recommended });
+
+    } catch (error) {
+        console.log(error.stack);
+        return res.status(500).json({ error: "Internal server error" });
+    }
 }
