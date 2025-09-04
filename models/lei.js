@@ -1,10 +1,12 @@
-const { Model } = require("@lakshya004/cosmos-odm");
-const { default: z } = require("zod");
+import { Model } from "@lakshya004/cosmos-odm";
+import z from "zod";
+import container from "../db.js";
+
 
 
 const lei = z.object({
 
-    id: z.string().uuid(),
+    id: z.uuid(),
     Lei: z.string(),
     Lei_Data: z.object({
         Brand_Name: z.string().nullable(),
@@ -45,8 +47,8 @@ const lei = z.object({
 
 })
 
-const collection = await container.connectCollection("Groot-db", "tieGlobalUser");
+const collection = await container.connectCollection("Groot-db", "lei");
 const Lei = new Model(lei,collection);
 
-module.exports= Lei;
+export default Lei
 

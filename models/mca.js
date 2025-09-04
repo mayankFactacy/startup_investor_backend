@@ -1,6 +1,7 @@
-const { Model } = require("@lakshya004/cosmos-odm")
-const { default: z } = require("zod")
-const container = require("../db")
+import z from "zod";
+import container from "../db.js";
+import { Model } from "@lakshya004/cosmos-odm";
+
 
 const mca = z.object(
     {
@@ -66,9 +67,9 @@ const mca = z.object(
         })
     })
 
-const collection = await container.connectCollection("Groot-db", "tieGlobalUser");
+const collection = await container.connectCollection("Groot-db", "mca");
 const Mca = new Model(mca, collection);
-module.exports = Mca;
+export default Mca
 
 
  

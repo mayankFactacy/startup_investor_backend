@@ -3,6 +3,8 @@ import Deals from "../models/deals.js";
 import Investors from "../models/investors.js";
 import News from "../models/news.js";
 import Orders from "../models/order.js";
+import Mca from "../models/mca.js";
+import User from "../models/user.js";
 
 // export async function getInvestorById(req, res) {
 //     try {
@@ -56,6 +58,52 @@ import Orders from "../models/order.js";
 export async function getRecentDealsAndNews(req, res) {
     try {
 
+        const userId = req.user.id;
+        const investorfilter = qb().eq(Orders.fields.userId, userId);
+
+        const { resources: orders } = await Orders.find({
+            filter: investorfilter,
+            limit: 1,
+            fields: {
+                Recommended_Investors: {
+                    name: "Recommended_Investors"
+                }
+            }
+        })
+
+        if (!orders || orders.length === 0) {
+            return res.status(404)
+                .json({
+                    message: "No order found"
+                })
+        }
+
+        const order = orders[0];
+
+        const investors = order.Recommended_Investors || [];
+
+        const stageCount = {};
+        investors.forEach(inv => {
+            const stage = inv.Stage || "Unknown";
+            stageCount[stage] = (stageCount[stage] || 0) + 1;
+        });
+
+        const stageSummary = Object.entries(stageCount).map(([stage, count]) => ({
+            stage,
+            count
+        }));
+
+        const investorsDetails = investors
+            .map(inv => ({
+                name: inv.Investor,
+                type: inv.Investor_Type,
+                similarity: Math.round(inv.Average_Similarity),
+                stage: inv.Stage || "Unknown"
+            }))
+            .slice(0, 5)
+
+
+
         const { resources: deals } = await Deals.find({
             fields: {
                 Investee: Deals.fields.Investee,
@@ -80,14 +128,19 @@ export async function getRecentDealsAndNews(req, res) {
                 title: News.fields.title,
                 date: News.fields.date,
                 url: News.fields.url,
-                content: News.fields.content
-
+                content: News.fields.content_cl,
+                headline: News.fields.headline,
+                image: News.fields.image,
+                published_date: News.fields.published_date,
+                published_date_time: News.fields.published_date_time
             },
             orderBy: qb().order(qb().desc({ name: "__ts" })),
             limit: 10
         });
 
         return res.status(200).json({
+            stages: stageSummary,
+            data: investorsDetails,
             deals: {
                 count: deals.length,
                 data: deals,
@@ -213,15 +266,17 @@ export async function getDealsNews(req, res) {
                 title: News.fields.title,
                 date: News.fields.date,
                 url: News.fields.url,
-                content: News.fields.content
+                content: News.fields.content_cl,
+                headline: News.fields.headline,
+                image: News.fields.image,
+                published_date: News.fields.published_date,
+                published_date_time: News.fields.published_date_time
             },
             orderBy: qb().order(qb().desc({ name: "__ts" })),
             limit: limit,
             offset: offset
 
         })
-
-
 
         return res.status(200).json({
             page,
@@ -290,28 +345,113 @@ export async function topInvestors(req, res) {
 
         const { resources: orders } = await Orders.find({
             filter: q,
-            limit: 1, 
+            limit: 1,
+            fields: { Recommended_Investors: { name: "Recommended_Investors" } }
         });
 
         if (!orders || orders.length === 0) {
-            return res.status(404).json({ data: [], message: "No orders found" });
+            return res.status(404).json({ message: "No orders found" });
         }
 
         const order = orders[0];
 
+        const investors = order.Recommended_Investors || [];
 
-       const recommended = (order.Recommended_Investors || [])
-            .slice(0, 5)  
-            .map(inv => ({
-                name: inv.Investor,
-                type: inv.Investor_Type,
-                similarity: Math.round(inv.Average_Similarity) + "%"
-            }));
 
-        return res.status(200).json({ data: recommended });
+        const stageCount = {};
+        investors.forEach(inv => {
+            const stage = inv.Stage || "Unknown";
+            stageCount[stage] = (stageCount[stage] || 0) + 1;
+        });
+
+        const stageSummary = Object.entries(stageCount).map(([stage, count]) => ({
+            stage,
+            count
+        }));
+
+        const investorsDetails = investors.map(inv => ({
+            name: inv.Investor,
+            type: inv.Investor_Type,
+            similarity: Math.round(inv.Average_Similarity),
+            stage: inv.Stage || "Unknown"
+        }))
+
+        return res.status(200)
+            .json({
+                stages: stageSummary,
+                data: investorsDetails
+            });
 
     } catch (error) {
-        console.log(error.stack);
+        console.error(error.stack);
         return res.status(500).json({ error: "Internal server error" });
     }
 }
+
+export async function myCompany(req, res) {
+    try {
+
+        const userId = req.user.id;
+
+        console.log("User id is", userId);
+
+        const q = qb().eq(User.fields.id, userId);
+
+        const { resources: users } = await User.find({
+            fields: {
+                Company_Name: User.fields.Company_Name
+            },
+            filter: q,
+            limit: 1
+        })
+
+        if (!users || users.length === 0) {
+            return res.status(404)
+                .json({
+                    message: "User Not Found"
+                })
+
+
+        }
+
+        const companyName = users[0].Company_Name;
+
+        console.log(companyName);
+
+        const { resources: myCompanyData } = await Mca.find({
+            filter: qb().eq({ name: "Mca_Data.Company_Name" }, companyName),
+            fields: {
+                Cin: Mca.fields.Cin,
+                Company_Name: { name: "Mca_Data.Company_Name" },
+                Logo_Url: { name: "Mca_Data.Logo" },
+                Headquarter: { name: "Mca_Data.State" },
+                Brand_Name: { name: "Mca_Data.Brand_Name" },
+                Industry_Tags: { name: "Mca_Data.Factacy_Industrial_Classification" },
+                Raised: { name: "Mca_Data.Amount" },
+                Target: { name: "Mca_Data.Turnover_Above" }
+
+            },
+            limit: 1
+        });
+
+        console.log(myCompanyData);
+
+
+        if (!myCompanyData || myCompanyData.length === 0) {
+            return res.status(404).json({ message: "MCA data not found" });
+        }
+
+        return res.status(200).json({
+            mca: myCompanyData[0]
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500)
+            .json({
+                error: "Internal Server Error"
+            })
+
+    }
+}
+

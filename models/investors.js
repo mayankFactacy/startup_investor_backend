@@ -32,7 +32,7 @@ const investors = z.object({
     Email: z.string()
 })
 
-const collection = await container.connectCollection("Groot-db", "tieGlobalUser");
+const collection = await container.connectCollection("heimdall-db", "Investor-Id");
 const Investors = new Model(investors, collection);
 
 export default Investors
