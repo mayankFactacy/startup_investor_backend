@@ -4,6 +4,7 @@ import { Model } from "@lakshya004/cosmos-odm";
 
 const user = z.object({
     id:z.string(),
+    Name: z.string(),
     Email: z.email().trim(),
     Company_Name: z.string(),
     Password: z.string().min(6),

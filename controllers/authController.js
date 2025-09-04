@@ -6,22 +6,26 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import Orders from "../models/order.js";
 import { callModel } from "../utils/callModel.js";
+import { success } from "zod";
 
 
 
 export async function sendOtp(req, res) {
   try {
-    const { name, email, password, confirm_password, role } = req.body;
+    const { name, email, password, confirm_password, role, company_name } = req.body;
 
-    if (!email || !name || !password || !confirm_password || !role) {
+    if (!email || !name || !password || !confirm_password || !role || !company_name) {
       return res.status(400).json({
-        error: "Missing Fields",
+        success:false,
+        message: "Missing Fields",
       })
     }
 
     if (password !== confirm_password) {
       return res.status(400).json({
-        error: "Password do not match"
+        success:false,
+        message: "Password do not match"
+                
       })
     }
 
@@ -35,6 +39,7 @@ export async function sendOtp(req, res) {
 
     if (UserExist && UserExist.Status === "verified") {
       return res.status(400).json({
+        success:false,
         message: "User already Exists"
       })
     }
@@ -47,6 +52,7 @@ export async function sendOtp(req, res) {
     await redis.setex(`otp:${email}`, 600,
       JSON.stringify({
         name: name,
+        company_name:company_name,
         password: hashedPassword,
         role:role,
         otp: otp,
@@ -61,16 +67,18 @@ export async function sendOtp(req, res) {
 
     return res.status(200)
       .json({
+        success:true,
         message: 'Otp will be sent to your email shortly'
       })
 
   } catch (error) {
 
     console.log(error.stack);
-    return res.status(500).json({ message: "Internal server error" });
-
-
-  }
+    return res.status(500)
+    .json({ 
+      success:false,
+      message: "Internal server error" });
+      }
 
 }
 export async function verifyOtp(req, res) {
@@ -80,7 +88,8 @@ export async function verifyOtp(req, res) {
 
     if (!email || !otp) {
       return res.status(400).json({
-        error: "Email and otp is required"
+        success:false,
+        message: "Email and otp is required"
       })
     }
 
@@ -90,23 +99,26 @@ export async function verifyOtp(req, res) {
 
     if (!data) {
       return res.status(400).json({
-        error: "Otp not found or expired"
+        success:false,
+        message: "Otp not found or expired"
       })
     }
 
-    const { otp: storedOtp, password: hashedPassword, name, role } = JSON.parse(data);
+    const { otp: storedOtp, password: hashedPassword, name, role, company_name } = JSON.parse(data);
 
     const inputOtp = Number(otp);
 
     if (storedOtp !== inputOtp) {
       return res.status(400).json({
-        error: "Invalid otp"
+        success:false,
+        message: "Invalid otp"
       })
     }
 
     const newUser = await User.insert({
       Email: email,
-      Company_Name: name,
+      Name:name,
+      Company_Name:company_name,
       Password: hashedPassword,
       Status: "verified",
       Role:role
@@ -137,10 +149,12 @@ export async function verifyOtp(req, res) {
 
 
     return res.status(201).json({
+      success:true,
       message: "User registered and verified successfully",
       userId: newUser.id,
       UserRole:newUser.Role,
       token:token
+
     })
 
 
@@ -149,7 +163,8 @@ export async function verifyOtp(req, res) {
 
     console.log(error.stack);
     return res.status(500).json({
-      error: "Internal server error"
+      success:false,
+      message: "Internal server error"
     })
 
 
@@ -162,7 +177,8 @@ export async function login(req, res) {
     const { email, password,role } = req.body;
     if (!email || !password || !role) {
       return res.status(400).json({
-        error: "Invalid request"
+        success:false,
+        message: "Invalid request"
       })
     }
 
@@ -176,7 +192,8 @@ export async function login(req, res) {
 
     if (user.Status !== "verified") {
       return res.status(403).json({
-        error: "User not verified. Please complete OTP verification.",
+        success:false,
+        message: "User not verified. Please complete OTP verification.",
       })
     }
 
@@ -184,7 +201,8 @@ export async function login(req, res) {
 
     if (!validPassword) {
       return res.status(400).json({
-        error: "Password do not match",
+        success:false,
+        message: "Password do not match",
       })
     }
 
@@ -213,6 +231,7 @@ export async function login(req, res) {
     });
 
     return res.status(200).json({
+      success:true,
       message: "Login successful",
       UserId: user.id,
       UserRole:user.Role,
@@ -221,7 +240,10 @@ export async function login(req, res) {
 
   } catch (error) {
     console.log(error.stack);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500)
+    .json({ 
+      success:false,
+      message: "Internal server error" });
 
   }
 }
@@ -238,7 +260,8 @@ export async function profileSetup(req, res) {
     if (!Major_sector || !Minor_sector || !Series) {
       return res.status(400)
         .json({
-          error: "Invalid Request"
+          success:false,
+          message: "Invalid Request"
         })
     }
 
@@ -246,6 +269,11 @@ export async function profileSetup(req, res) {
 
     if (!UserId) {
       console.log(error);
+      return res.status(404)
+      .json({
+        success:false,
+        message:"User not found"
+      })
     }
     // console.log(UserId);
     // console.log(Major_sector);
@@ -271,6 +299,7 @@ export async function profileSetup(req, res) {
     //console.log(response);
 
     return res.status(200).json({
+      success:true,
       message: "Profile completed successfully",
       modelResponse: model,
       profile:response
@@ -281,7 +310,8 @@ export async function profileSetup(req, res) {
     console.log(error.stack);
     return res.status(500)
       .json({
-        error: "Internal Server Error"
+        success:false,
+        message: "Internal Server Error"
       })
 
   }

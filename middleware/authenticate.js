@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { success } from "zod";
 
 export const authenticate = (req, res, next) => {
     try {
@@ -26,14 +27,17 @@ export const authenticate = (req, res, next) => {
 
 
         if (!token) {
-            return res.status(401).json({ message: "Unauthorized. No token found" });
+            return res.status(401).json({ 
+                success:false,
+                message: "Unauthorized. No token found" });
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         if (!decoded) {
             return res.status(401).json({
-                error: "Unauthorized"
+                success:false,
+                message: "Unauthorized"
             })
         }
 
@@ -48,7 +52,8 @@ export const authenticate = (req, res, next) => {
 
         console.log(error);
         return res.status(500).json({
-            error: "Internal server error from middleware"
+            success:false,
+            message: "Internal server error from middleware"
         })
 
 
