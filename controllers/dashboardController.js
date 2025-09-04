@@ -310,7 +310,7 @@ export async function filterInvestor(req, res) {
 
         return res.status(200).json({
             success: true,
-            resources,
+            investor,
             page: parseInt(page),
             limit: parseInt(limit)
         })
