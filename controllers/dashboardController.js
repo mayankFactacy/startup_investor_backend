@@ -165,7 +165,7 @@ export async function getRecentDealsAndNews(req, res) {
             limit: 10
         });
 
-        if (news || news.length === 0) {
+        if (!news || !news.length === 0) {
             return res.status(404)
                 .json({
                     success: false,
