@@ -3,7 +3,7 @@ import container from "../db.js";
 import { Model } from "@lakshya004/cosmos-odm";
 
 const news = z.object({
-  id: z.string(),
+  id: z.uuid().optional(),
   Art_Id: z.string(),
   title: z.string(),
   date: z.string(), 
@@ -13,7 +13,7 @@ const news = z.object({
   image:z.string(),
   published_date: z.string(),
   published_date_time: z.string()
-}).strict();
+}).strict().loose();
 
 
 const collection = await container.connectCollection("cdb-L1", "AICITE-IC");

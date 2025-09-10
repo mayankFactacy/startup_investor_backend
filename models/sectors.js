@@ -4,7 +4,7 @@ import { Model } from "@lakshya004/cosmos-odm";
 
 
 const sectors = z.object({
-     id: z.string().uuid(),
+     id:z.uuid().optional(),
     Sectors: z.string(),
     Sector_Id: z.string(),
     Main: z.tuple(
@@ -23,7 +23,7 @@ const sectors = z.object({
     Deal_Id: z.array(
         z.string().uuid()
     )
-})
+}).loose();
 
 const collection = await container.connectCollection("cdb-L1", "All-Sectors");
 const Sectors = new Model(sectors,collection);

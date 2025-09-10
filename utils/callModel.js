@@ -2,7 +2,7 @@ export async function callModel(data) {
     try {
         console.log("data is ",data);
         
-        const response = await fetch("https://postman-echo.com/post", {
+        const response = await fetch("https://aimodel.startupinvestors.ai/api/v1/auth/recom", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)

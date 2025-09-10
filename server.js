@@ -7,6 +7,7 @@ import dashboard from "./routes/dashboard.js";
 import dotenv from "dotenv";
 
 import authRoutes from "./routes/auth.js";
+import outreachRoutes from "./routes/outreach.js"
 dotenv.config();
 
 
@@ -51,6 +52,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use("/api/v1/auth", authRoutes)
 app.use("/api/v1/dashboard", dashboard);
+app.use("/api/v1/myoutreach",outreachRoutes);
 
 app.use((err, req, res, next) => {
     console.error(err);

@@ -3,14 +3,14 @@ import container from "../db.js";
 import { Model } from "@lakshya004/cosmos-odm";
 
 const user = z.object({
-    id:z.string(),
+    id:z.uuid().optional(),
     Name: z.string(),
     Email: z.email().trim(),
     Company_Name: z.string(),
     Password: z.string().min(6),
     Status: z.string().default("pending"),
     Role: z.enum(["startup", "investor"])
-})
+}).loose();
 
 // maor_sector:
 // minor sector:

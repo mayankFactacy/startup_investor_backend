@@ -6,7 +6,7 @@ import container from "../db.js";
 
 const lei = z.object({
 
-    id: z.uuid(),
+    id: z.uuid().optional(),
     Lei: z.string(),
     Lei_Data: z.object({
         Brand_Name: z.string().nullable(),
@@ -45,7 +45,7 @@ const lei = z.object({
     })
 
 
-})
+}).loose();
 
 const collection = await container.connectCollection("Groot-db", "lei");
 const Lei = new Model(lei,collection);

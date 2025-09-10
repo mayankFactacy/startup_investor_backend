@@ -3,7 +3,7 @@ import container from "../db.js";
 import { Model } from "@lakshya004/cosmos-odm";
 
 const brands = z.object({
-
+    id:z.uuid().optional(),
     Reference_Id: z.string().uuid(),
     Container_Name: z.string(),
     Registration_Number: z.string().uuid(),
@@ -28,7 +28,7 @@ const brands = z.object({
     keywords: z.string().default("None"),
 
 
-})
+}).loose();
 
 const collection = await container.connectCollection("Groot-db", "brands");
 const Brands = new Model(brands, collection);

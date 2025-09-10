@@ -5,7 +5,7 @@ import { Model } from "@lakshya004/cosmos-odm";
 
 const mca = z.object(
     {
-        id: z.string(),
+        id: z.uuid().optional(),
         Cin: z.string("Cin number is required"),
         Mca_Data: z.object({
             Brand_Name: z.string(),
@@ -65,7 +65,7 @@ const mca = z.object(
 
 
         })
-    })
+    }).loose();
 
 const collection = await container.connectCollection("Groot-db", "mca");
 const Mca = new Model(mca, collection);

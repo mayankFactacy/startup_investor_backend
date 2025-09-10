@@ -5,7 +5,7 @@ import { Model } from "@lakshya004/cosmos-odm";
 
 const deals = z.object(
     {
-        id: z.uuid(),
+        id: z.uuid().optional(),
         Investee: z.string(),
         Output_CIN: z.string(),
         Legal_Name: z.string(),
@@ -57,7 +57,7 @@ const deals = z.object(
         IC_Flag: z.string(),
         Brand_Id: z.uuid()
     }
-)
+).loose();
 
 
 const collection = await container.connectCollection("heimdall-db", "Deal-Id");

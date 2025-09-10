@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { success } from "zod";
+
 
 export const authenticate = (req, res, next) => {
     try {
@@ -32,6 +32,7 @@ export const authenticate = (req, res, next) => {
                 message: "Unauthorized. No token found" });
         }
 
+        
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         if (!decoded) {

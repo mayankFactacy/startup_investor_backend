@@ -183,12 +183,12 @@ export async function login(req, res) {
     }
 
     const query = qb().eq(User.fields.Email, email);
-    const { resources } = await User.find({
+    const { resources:userData } = await User.find({
       filter: query,
       limit: 1
     })
 
-    const user = resources.length > 0 ? resources[0] : null;
+    const user = userData.length > 0 ? userData[0] : null;
 
     if (user.Status !== "verified") {
       return res.status(403).json({
@@ -234,8 +234,10 @@ export async function login(req, res) {
       success:true,
       message: "Login successful",
       UserId: user.id,
+      Name: userData[0].Name,
       UserRole:user.Role,
       token: token
+      
     })
 
   } catch (error) {
@@ -255,9 +257,9 @@ export async function profileSetup(req, res) {
     //   return res.status(403).json({ error: "Access denied: Only startups can complete profile" });
     // }
 
-    const { Major_sector, Minor_sector, Series } = req.body;
+    const { Major_Sector, Minor_Sector, Series } = req.body;
 
-    if (!Major_sector || !Minor_sector || !Series) {
+    if (!Major_Sector || !Minor_Sector || !Series) {
       return res.status(400)
         .json({
           success:false,
@@ -265,9 +267,9 @@ export async function profileSetup(req, res) {
         })
     }
 
-    const UserId = req.user.id;
+    const userId = req.user.id;
 
-    if (!UserId) {
+    if (!userId) {
       console.log(error);
       return res.status(404)
       .json({
@@ -282,16 +284,16 @@ export async function profileSetup(req, res) {
 
 
     const response = await Orders.insert({
-      userId: UserId,              
-      Major_Sector: Major_sector,   
-      Minor_Sector: Minor_sector,   
+      userId: userId,              
+      Major_Sector: Major_Sector,   
+      Minor_Sector: Minor_Sector,   
       Series: Series                
     });
 
     const model = await callModel({
-      UserId,
-      Major_sector,
-      Minor_sector,
+      userId,
+      Major_Sector,
+      Minor_Sector,
       Series
     })
 
