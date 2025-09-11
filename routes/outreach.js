@@ -1,7 +1,7 @@
 import express from "express"
 import { authenticate } from "../middleware/authenticate.js";
 import { authorizeRole } from "../middleware/authroizeRole.js";
-import { addMessage, getAllShortlistInvestor, sendIntro } from "../controllers/outreachController.js";
+import { addMessage, getAllShortlistInvestor, getChat, sendIntro } from "../controllers/outreachController.js";
 import Chats from "../models/chat.js";
 import { qb } from "@lakshya004/cosmos-odm";
 
@@ -13,27 +13,29 @@ router.get("/shortlisted", authenticate, authorizeRole("startup"),getAllShortlis
 
 router.post("/investor/:investorId/send-intro",authenticate,authorizeRole("startup"),sendIntro)
 
-router.post("/chats/:chatId/messages",authenticate,authorizeRole("startup"),addMessage)
+router.post("/chats/:chatId/messages",authenticate,authorizeRole("startup"),addMessage);
 
-router.get('/chats/:chatId',async(req,res)=>{
+router.get("/chats/:chatId",getChat)
 
-    try {
-        const chatId = req.params.chatId;
+// router.get('/chats/:chatId',async(req,res)=>{
 
-        const {resources: chat} = await Chats.find({
-        filter: qb().eq(Chats.fields.investorId, chatId)
-        })
+//     try {
+//         const chatId = req.params.chatId;
+
+//         const {resources: chat} = await Chats.find({
+//         filter: qb().eq(Chats.fields.investorId, chatId)
+//         })
         
 
-        return res.status(200)
-        .json({
-            chat
-        })
-    } catch (error) {
-        console.log(error);
+//         return res.status(200)
+//         .json({
+//             chat
+//         })
+//     } catch (error) {
+//         console.log(error);
         
-    }
+//     }
 
-})
+// })
 
 export default router;

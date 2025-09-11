@@ -176,12 +176,12 @@ export async function sendIntro(req, res) {
 
 
 
-        await sendInvestorMail(
-            investorEmail,
-            UserEmail,
-            subject,
-            body
-        )
+        // await sendInvestorMail(
+        //     investorEmail,
+        //     UserEmail,
+        //     subject,
+        //     body
+        // )
 
         return res.status(201).json({
             success: true,
@@ -204,136 +204,6 @@ export async function sendIntro(req, res) {
     }
 }
 
-// export async function addMessage(req, res) {
-//     try {
-//         const { chatId } = req.params;
-//         const UserId = req.user.id;
-//         const { body, attachments, subject = "" } = req.body;
-//         const UserEmail = req.user.email;
-
-//         const newMessage = {
-//             sender: "Founder",
-//             body,
-//             attachments: attachments || [],
-//         }
-
-//         // find the chat by the investor id = chatId
-
-//         const { resources: chats } = await Chats.find({
-//             filter: qb().eq(Chats.fields.investorId, chatId),
-//             limit: 1
-//         })
-
-
-
-//         if (!chats || chats.length === 0) {
-//             return res.status(404)
-//                 .json({
-//                     success: false,
-//                     message: "No chat found with the investor"
-//                 })
-//         }
-
-
-//         const { resources: order } = await Orders.find({
-//             fields: { Investors: Orders.fields.Investors },
-//             filter: qb().eq(Orders.fields.userId, UserId),
-//             limit: 1
-//         })
-
-//         if (!order || order.length == 0) {
-//             return res.status(404)
-//                 .json({
-//                     success: false,
-//                     message: "No order found"
-//                 })
-//         }
-
-//         const { resources: investorData } = await Investors.find({
-//             fields: {
-//                 Email: Investors.fields.Email
-//             },
-//             filter: qb().eq(Investors.fields.id, chatId)
-
-//         })
-
-//         // console.log(investorData[0].Email);
-
-//         const investorEmail = investorData[0].Email;
-
-
-//         const orderData = order[0];
-//         const chat = chats[0];
-//         console.log(chat, "Chat ");
-
-
-//         console.log(orderData);
-
-
-//         const updatedInvestor = orderData.Investors.map(inv =>
-//             inv.investorId === chatId
-//                 ? { ...inv, Status: "FollowUp" }
-//                 : inv
-//         )
-
-
-//         const updatedMessage = [...chat.messages, newMessage]
-
-//         console.log(updatedMessage, "MESSAGE");
-
-
-//         // await sendInvestorMail(
-//         //     investorEmail,
-//         //     UserEmail,
-//         //     subject,
-//         //     body
-//         // )
-
-
-//         console.log(chat.investorId, " Investor ID");
-//         console.log("chat.ID", chat.investorId);
-
-//         console.log("📌 Updating chat with:", {
-//             id: chat.id,
-//             investorId: chat.investorId,
-//             userId: chat.userId,
-//             messages: updatedMessage,
-//         });
-
-
-
-//         await Chats.update({
-//             doc: { messages: updatedMessage },
-//             filter: qb().eq(Chats.fields.investorId, chat.investorId)
-//         })
-
-//         console.log("Yahah baat pauchi ki nahi");
-
-
-//         await Orders.update({
-//             doc: { Investors: updatedInvestor },
-//             filter: qb().eq(Orders.fields.userId, UserId)
-//         })
-
-
-
-//         return res.status(200)
-//             .json({
-//                 success: true,
-//                 message: "Message Added",
-//                 newMessage
-//             })
-
-//     } catch (error) {
-//         console.log(error.stack);
-//         return res.status(500)
-//             .json({
-//                 success: false,
-//                 error: "Internal server error"
-//             })
-
-//     }
-// }
 
 export async function addMessage(req, res) {
     try {
@@ -436,10 +306,45 @@ export async function addMessage(req, res) {
         });
 
     } catch (error) {
-        console.error("❌ Error in addMessage:", error.stack);
+        console.error("Error in addMessage:", error.stack);
         return res.status(500).json({
             success: false,
             error: "Internal server error"
         });
+    }
+}
+
+export async function getChat ( req, res){
+    try {
+
+        const chatId = req.params.chatId;
+
+        const {resources:chats}= await Chats.find({
+            filter:qb().eq(Chats.fields.investorId,chatId),
+            limit:1
+        })
+
+        if(!chats || chats.length === 0){
+            return res.status(404)
+            .json({
+                success:false,
+                message:"No chat found"
+            })
+        }
+
+        return res.status(200)
+        .json({
+            success:true,
+            chat:chats
+        })
+        
+    } catch (error) {
+        console.log(error.stack);
+        return res.status(500)
+        .json({
+            success:false,
+            error:"Internal server error"
+        })
+        
     }
 }

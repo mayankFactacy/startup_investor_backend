@@ -5,16 +5,11 @@ import { allSectors, filterInvestor, getDealsNews, getRecentDealsAndNews, myComp
 import { authenticate } from "../middleware/authenticate.js";
 import { authorizeRole } from "../middleware/authroizeRole.js";
 import Investors from "../models/investors.js";
-import { success } from "zod";
-import Brands from "../models/brands.js";
-import Deals from "../models/deals.js";
-import Lei from "../models/lei.js";
+
 import Orders from "../models/order.js";
 import User from "../models/user.js";
 import { qb } from "@lakshya004/cosmos-odm";
-import { da, tr } from "zod/v4/locales";
 import Chats from "../models/chat.js";
-import container from "../db.js";
 
 
 router.get("/startup-dashboard", authenticate, authorizeRole("startup"), getRecentDealsAndNews);
@@ -33,7 +28,7 @@ router.get("/list-sectors", allSectors);
 
 router.post("/shortlisting", authenticate, authorizeRole("startup"), shortListInvestors);
 
-router.delete("/delete-list", authenticate, authorizeRole("startup"), removeShortListedInvestor);
+router.put("/delete-list", authenticate, authorizeRole("startup"), removeShortListedInvestor);
 
 
 
@@ -127,7 +122,7 @@ router.get("/me", async (req, res) => {
 router.get("/inv", async (req, res) => {
     try {
         const { resources: investor } = await Investors.find({
-            
+
         })
         return res.status(200)
             .json({
@@ -271,34 +266,32 @@ router.get("/getorder", async (req, res) => {
 //     }
 // })
 
-router.get("/intro", async (req, res) => {
-    try {
-        const q = qb()
-        const { resources: inv } = await Chats.find({})
-        const data = await Chats.findById("824a8943-b2dc-42f8-9462-ad3636462258")
-        console.log("data: ",data);
-        
+// router.get("/intro", async (req, res) => {
+//     try {
+//         const q = qb()
+//         const { resources: inv } = await Chats.find({})
+//         const data = await Chats.findById("824a8943-b2dc-42f8-9462-ad3636462258")
+//         //console.log("data: ",data);
+//         return res.status(200)
+//             .json({
+//                 inv
+//             })
 
-        return res.status(200)
-        .json({
-            inv
-        })
-
-    } catch (error) {
-        console.log(error);
-        return res.status(500)
-            .json({
-                error: "Internal Server Error"
-            })
+//     } catch (error) {
+//         console.log(error);
+//         return res.status(500)
+//             .json({
+//                 error: "Internal Server Error"
+//             })
 
 
-    }
-})
+//     }
+// })
 
 router.get("/invfrmd", async (req, res) => {
     try {
 
-        const {investorId}= req.body;
+        const { investorId } = req.body;
 
         const { resources: order } = await Investors.find({
             filter: qb().eq(Investors.fields.id, investorId)
@@ -307,10 +300,10 @@ router.get("/invfrmd", async (req, res) => {
         console.log(order[0].Investor_Type)
 
         return res.status(200)
-        .json({
-            success:true,
-            data:order[0].Investor
-        })
+            .json({
+                success: true,
+                data: order[0].Investor
+            })
 
     } catch (error) {
         console.log(error);
