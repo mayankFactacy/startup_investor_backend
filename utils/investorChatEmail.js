@@ -4,9 +4,9 @@ const sendInvestorMail = async (to, from, subject, body) => {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail", 
-      auth: {
-        user: "981mayankchauhan@gmail.com", 
-        pass: "ligp zxur equv bchm", 
+       auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS 
       },
     });
 
