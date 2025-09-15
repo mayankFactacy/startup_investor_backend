@@ -119,20 +119,22 @@ router.get("/me", async (req, res) => {
 //     }
 // })
 
-router.get("/inv", async (req, res) => {
-    try {
-        const { resources: investor } = await Investors.find({
+// router.get("/inv", async (req, res) => {
+//     try {
+//         const {id}=req.body; 
+//         const { resources: investor } = await Investors.find({
+//             filter:qb().eq(Investors.fields.id,id)
 
-        })
-        return res.status(200)
-            .json({
-                data: investor
-            })
-    } catch (error) {
-        console.log(error);
+//         })
+//         return res.status(200)
+//             .json({
+//                 data: investor
+//             })
+//     } catch (error) {
+//         console.log(error);
 
-    }
-})
+//     }
+// })
 
 // router.get("/lei", async (req, res) => {
 //     try {

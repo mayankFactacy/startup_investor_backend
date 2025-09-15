@@ -4,6 +4,7 @@ import { qb } from "@lakshya004/cosmos-odm";
 import Chats from "../models/chat.js";
 import sendInvestorMail from "../utils/investorChatEmail.js";
 import Investors from "../models/investors.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 
 // export async function sendIntro (req, res){
@@ -36,14 +37,8 @@ export async function getAllShortlistInvestor(req, res) {
         })
 
         if (!shortListedInvestors || shortListedInvestors.length === 0) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "No investor is shortlisted"
-                })
+            return successResponse(res, {}, "No Investor shortlisted yet" );
         }
-
-
 
         const investorid = shortListedInvestors[0].Investors[0].investorId
 
@@ -59,36 +54,12 @@ export async function getAllShortlistInvestor(req, res) {
         })
 
         if (!investorData || investorData.length === 0) {
-            return res.Status(404)
-                .json({
-                    success: false,
-                    message: " Investor data not found"
-                })
+            return errorResponse(res, "No investor found",404);
         }
-
-
-
-        if (!shortListedInvestors || shortListedInvestors.length === 0) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "No investor is shortlisted"
-
-                })
-        }
-
-        return res.status(200)
-            .json({
-                success: true,
-                message: investorData
-            })
+        return successResponse(res, {investorData}, "All investors");
     } catch (error) {
         console.log(error.stack);
-        return res.status(500)
-            .json({
-                success: false,
-                error: "Internal Server Error"
-            })
+        return errorResponse(res)
     }
 }
 
@@ -101,20 +72,12 @@ export async function sendIntro(req, res) {
 
         const { investorId } = req.params;
         if (!investorId) {
-            return res.status(400)
-                .json({
-                    success: false,
-                    message: "Investor id required"
-                })
+            return errorResponse(res, "Investor-Id required", 400);
         }
         const { subject, body, attachments } = req.body;
 
         if (!body) {
-            return res.status(400)
-                .json({
-                    success: false,
-                    message: "Body is required"
-                })
+            return errorResponse(res, "Body is required", 400);
         }
 
         const intro = await Chats.insert({
@@ -137,11 +100,7 @@ export async function sendIntro(req, res) {
         })
 
         if (!order || order.length == 0) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "No order found"
-                })
+            return errorResponse(res, "No Order found", 404);
         }
 
         const { resources: investorData } = await Investors.find({
@@ -183,23 +142,11 @@ export async function sendIntro(req, res) {
         //     body
         // )
 
-        return res.status(201).json({
-            success: true,
-            intro,
-            message: "Intro sent, investor status updated, and email delivered"
-        });
-
-
-
+      
+        return successResponse(res,{intro},"Intro sent, Investor status updated and email delivered")
     } catch (error) {
         console.log(error.stack);
-        return res.status(500)
-            .json({
-                success: false,
-                error: "Internal Server Error"
-
-
-            })
+        return errorResponse(res);
 
     }
 }
@@ -230,10 +177,7 @@ export async function addMessage(req, res) {
         });
 
         if (!chats || chats.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "No chat found with this investor"
-            });
+            return errorResponse(res, " No chat found with this investor", 404);
         }
 
         const chat = chats[0];
@@ -247,10 +191,7 @@ export async function addMessage(req, res) {
         });
 
         if (!orders || orders.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "No order found"
-            });
+            return errorResponse(res, "No order found", 404);
         }
 
         const orderData = orders[0];
@@ -299,18 +240,11 @@ export async function addMessage(req, res) {
         // 7. Send email (uncomment when ready)
         // await sendInvestorMail(investorEmail, UserEmail, subject, body);
 
-        return res.status(200).json({
-            success: true,
-            message: "Message added and status updated",
-            newMessage
-        });
+        return successResponse(res,{newMessage},"Message added and status updated")
 
     } catch (error) {
         console.error("Error in addMessage:", error.stack);
-        return res.status(500).json({
-            success: false,
-            error: "Internal server error"
-        });
+        return errorResponse(res);
     }
 }
 
@@ -325,26 +259,17 @@ export async function getChat ( req, res){
         })
 
         if(!chats || chats.length === 0){
-            return res.status(404)
-            .json({
-                success:false,
-                message:"No chat found"
-            })
+            return errorResponse(res, "No chat found", 404);
         }
 
-        return res.status(200)
-        .json({
-            success:true,
-            chat:chats
+        
+        return successResponse(res,{
+            chats
         })
         
     } catch (error) {
         console.log(error.stack);
-        return res.status(500)
-        .json({
-            success:false,
-            error:"Internal server error"
-        })
+        return errorResponse(res);
         
     }
 }

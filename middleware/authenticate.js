@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { errorResponse } from "../utils/response.js";
 
 
 export const authenticate = (req, res, next) => {
@@ -27,19 +28,14 @@ export const authenticate = (req, res, next) => {
 
 
         if (!token) {
-            return res.status(401).json({ 
-                success:false,
-                message: "Unauthorized. No token found" });
+            return errorResponse(res, "Unauthorized, No token found", 401);
         }
 
-        
+
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         if (!decoded) {
-            return res.status(401).json({
-                success:false,
-                message: "Unauthorized"
-            })
+           return errorResponse(res, "Unauthorized", 401)
         }
 
         req.user = decoded;
@@ -52,10 +48,7 @@ export const authenticate = (req, res, next) => {
     } catch (error) {
 
         console.log(error);
-        return res.status(500).json({
-            success:false,
-            message: "Internal server error from middleware"
-        })
+       return errorResponse(res)
 
 
     }

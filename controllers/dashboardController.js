@@ -6,6 +6,7 @@ import Orders from "../models/order.js";
 import Mca from "../models/mca.js";
 import User from "../models/user.js";
 import Sectors from "../models/sectors.js";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 
 // export async function getInvestorById(req, res) {
@@ -61,14 +62,6 @@ export async function getRecentDealsAndNews(req, res) {
     try {
         const userId = req.user.id;
 
-        if (!userId) {
-            return res.status(400).json({
-                success: false,
-                message: "Bad request, Missing userId"
-            });
-        }
-
-
         const [ordersRes, dealsRes, newsRes, userRes] = await Promise.all([
             Orders.find({
                 filter: qb().eq(Orders.fields.userId, userId),
@@ -122,11 +115,10 @@ export async function getRecentDealsAndNews(req, res) {
 
 
         if (!orders || orders.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "No order found"
-            });
+            return errorResponse(res, "No order found", 404)
         }
+
+
 
         const order = orders[0];
         const investors = order.Recommended_Investors || [];
@@ -174,38 +166,25 @@ export async function getRecentDealsAndNews(req, res) {
 
 
         if (!investorsDetails || investorsDetails.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Investor Details Missing"
-            });
+            return errorResponse(res, " Investor Details Missing", 404);
         }
 
 
         if (!deals || deals.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "No Deals data found"
-            });
+            return errorResponse(res, "No Deals Data found", 404);
         }
 
 
         if (!news || news.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "No News Data found"
-            });
+            return errorResponse(res, "No News Found", 404);
         }
 
 
         if (!user || user.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "User Not Found"
-            });
+            return errorResponse(res, "User not found", 404);
         }
 
-
-        return res.status(200).json({
+        return successResponse(res, {
             loggedInUser: user[0].Name,
             stages: stageSummary,
             shortlistedInvestors: shortlistInvestorCount,
@@ -219,14 +198,12 @@ export async function getRecentDealsAndNews(req, res) {
                 count: news.length,
                 data: news
             },
-            success: true
-        });
+        },
+            "Dashboard Data fetched"
+        )
     } catch (error) {
         console.error("Error in getRecentDealsAndNews:", error.stack);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error"
-        });
+        return errorResponse(res);
     }
 }
 
@@ -248,26 +225,15 @@ export async function RecentDeals(req, res) {
 
         if (!deals || deals.length === 0) {
             return res.status(404)
-                .json({
-                    success: false,
-                    message: "Deals not found"
-                })
+            return errorResponse(res, "Deals not found", 404);
         }
 
-
-        return res.status(200).json({
-            success: true,
-            data: deals,
-        })
+        return successResponse(res, { deals }, "Recent Deals Fetched")
 
 
     } catch (error) {
         console.log(error);
-        return res.status(500).json({
-            success: true,
-            message: "Internal server error"
-        })
-
+        return errorResponse(res);
     }
 }
 
@@ -319,28 +285,27 @@ export async function filterInvestor(req, res) {
         })
 
         if (!investor || investor.length === 0) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "Investor data not found"
-                })
-
+            return errorResponse(res, "Investor data not found", 404);
         }
 
-        return res.status(200).json({
-            success: true,
-            investor,
-            page: parseInt(page),
-            limit: parseInt(limit)
-        })
+        const pageNum = parseInt(page) || 1;
+        const limitNum = parseInt(limit) || 10;
+
+        return successResponse(res, {
+            investor
+        },
+
+            "List of Investors after filter",
+            200,
+            {
+                pageNum, limitNum
+            }
+
+        )
     } catch (error) {
 
         console.log(error.stack);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error"
-        })
-
+        return errorResponse(res);
     }
 }
 
@@ -372,31 +337,22 @@ export async function getDealsNews(req, res) {
         })
 
         if (!news || news.length === 0) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "News not found"
-                })
+            return errorResponse(res, "News not found", 404);
         }
 
-        return res.status(200).json({
-            success: true,
-            page,
-            limit,
+        return successResponse(res, {
             count: news.length,
-            data: news
-        });
+            news
+        },
+            "Latest Deals News",
+            200,
+            { page, limit }
+        )
 
     } catch (error) {
         console.log(error);
-        return res.status(500)
-            .json({
-                success: false,
-                message: "Internal server error"
-            })
-
+        return errorResponse(res);
     }
-
 }
 
 // export async function topInvestors(req, res) {
@@ -444,17 +400,7 @@ export async function topInvestors(req, res) {
     try {
         const userId = req.user.id;
 
-        if (!userId) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "No user found"
-                })
-        }
-
-
         const q = qb().eq(Orders.fields.userId, userId);
-
 
         const { resources: orders } = await Orders.find({
             filter: q,
@@ -463,12 +409,7 @@ export async function topInvestors(req, res) {
         });
 
         if (!orders || orders.length === 0) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "No orders found"
-                });
-
+            return errorResponse(res, "Order not found", 404);
         }
 
         const order = orders[0];
@@ -495,27 +436,20 @@ export async function topInvestors(req, res) {
         }))
 
         if (!investorsDetails || investorsDetails.length === 0) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "Investor not found"
-                })
+            return errorResponse(res, "Investor not found", 404);
         }
 
-        return res.status(200)
-            .json({
-                success: true,
-                stages: stageSummary,
-                data: investorsDetails
-            });
+        return successResponse(res, {
+            stages: stageSummary,
+            investorsDetails
+        },
+            "Top Investors"
+
+        )
 
     } catch (error) {
         console.error(error.stack);
-        return res.status(500)
-            .json({
-                success: false,
-                message: "Internal server error"
-            });
+        return errorResponse(res);
     }
 }
 
@@ -524,17 +458,10 @@ export async function myCompany(req, res) {
 
         const userId = req.user.id;
 
-        if (!userId) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "User not found"
-                })
-        }
 
-        //console.log("User id is", userId);
+        // console.log("User id is", userId);
 
-        const q = qb().eq({ name: "User.id" }, userId);
+        const q = qb().eq(User.fields.id, userId);
 
         const { resources: users } = await User.find({
             fields: {
@@ -545,12 +472,7 @@ export async function myCompany(req, res) {
         })
 
         if (!users || users.length === 0) {
-            return res.status(404)
-                .json({
-                    message: "User Not Found"
-                })
-
-
+            return errorResponse(res, "User not found", 404);
         }
 
         const companyName = users[0].Company_Name;
@@ -558,7 +480,7 @@ export async function myCompany(req, res) {
         console.log(companyName);
 
         const { resources: myCompanyData } = await Mca.find({
-            filter: qb().eq({ name: "Mca_Data.Company_Name" }, companyName),
+            filter: qb().eq(Mca.fields.Mca_Data.Company_Name, companyName),
             fields: {
                 Cin: Mca.fields.Cin,
                 Company_Name: { name: "Mca_Data.Company_Name" },
@@ -576,27 +498,18 @@ export async function myCompany(req, res) {
         console.log(myCompanyData);
 
         if (!myCompanyData || myCompanyData.length === 0) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "MCA data not found"
-                })
+            return errorResponse(res, "Mca data not found", 404);
         }
 
-
-
-        return res.status(200).json({
-            success: true,
+        return successResponse(res, {
             mca: myCompanyData[0]
-        });
+        },
+            "My Company Data"
+        )
 
     } catch (error) {
         console.log(error);
-        return res.status(500)
-            .json({
-                success: false,
-                error: "Internal Server Error"
-            })
+        return errorResponse(res);
 
     }
 }
@@ -613,27 +526,19 @@ export async function allSectors(req, res) {
 
 
         if (!sectors || sectors.length === 0) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "Sectors not found"
-                })
+            return errorResponse(res, "Sectors not found", 404);
         }
         const sectorList = sectors.map(s => s.Sectors);
 
-
-        return res.status(200).json({
-            success: true,
-            sectors: sectorList
-        })
+        return successResponse(res, {
+            sectorList
+        },
+            "All Sectors"
+        )
 
     } catch (error) {
         console.log(error);
-        return res.status(500)
-            .json({
-                success: false,
-                message: "Internal server error"
-            })
+        return errorResponse(res);
 
     }
 }
@@ -644,12 +549,7 @@ export async function shortListInvestors(req, res) {
         const { investorId } = req.body;
 
         if (!investorId) {
-            return res.status(400)
-                .json({
-                    success: false,
-                    message: "Investor-Id missing"
-
-                })
+            return errorResponse(res, "Investor-Id required", 400);
         }
 
 
@@ -660,18 +560,13 @@ export async function shortListInvestors(req, res) {
         });
 
         if (!orders || orders.length === 0) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "Order not found"
-
-                })
+            return errorResponse(res, "Order not found", 404);
         }
 
         // Ensure we got a document
         const order = orders[0];
         if (!order) {
-            return res.status(404).json({ success: false, message: "User not found" });
+            return errorResponse(res, "User not found", 404);
         }
 
         // Ensure Recommended_Investors exists
@@ -684,7 +579,7 @@ export async function shortListInvestors(req, res) {
         // Check if investor exists in recommendations
         const investor = investors.find(i => i.id === investorId);
         if (!investor) {
-            return res.status(400).json({ success: false, message: "Investor not in recommendations" });
+            return errorResponse(res, "Investor not in recommendations", 404);
         }
 
         // Initialize Shortlists if not present
@@ -695,20 +590,16 @@ export async function shortListInvestors(req, res) {
 
 
         if (shortlisted) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "Investor shortlisted Already"
-                })
+            return errorResponse(res, "Investor shortlisted already", 409);
         }
 
-        //console.log(shortlisted, "Invstor shorltistd");
+        // console.log(shortlisted, "Invstor shorltistd");
 
 
         // Add to shortlist
         order.Investors.push({
             investorId,
-            Investor: investors[0].Investor,
+            Investor: investor.Investor,
             Status: "Shortlisted"
         });
 
@@ -726,11 +617,14 @@ export async function shortListInvestors(req, res) {
             filter: q.eq(Orders.fields.userId, UserId)
         })
 
+        console.log(order.Investors);
 
-        return res.status(200).json({ success: true, message: "Investor shortlisted successfully" });
+
+
+        return successResponse(res, {}, "Investor shortlisted successfully")
     } catch (error) {
         console.error(error.stack);
-        return res.status(500).json({ success: false, error: "Internal Server Error" });
+        return errorResponse(res);
     }
 }
 
@@ -742,12 +636,7 @@ export async function removeShortListedInvestor(req, res) {
         const { investorId } = req.body;
 
         if (!investorId) {
-            return res.status(400)
-                .json({
-                    success: false,
-                    message: "Investor-Id missing"
-
-                })
+            return errorResponse(res, "Investor-Id missing", 400);
         }
 
         const { resources: order } = await Orders.find({
@@ -757,11 +646,7 @@ export async function removeShortListedInvestor(req, res) {
         })
 
         if (!order || order.length === 0) {
-            return res.status(404)
-                .json({
-                    success: false,
-                    message: "Order not found"
-                })
+            return errorResponse(res, "Order not found", 404);
         }
 
         // console.log(order[0].Shortlists,"++++++++++++++++++++++");
@@ -779,18 +664,14 @@ export async function removeShortListedInvestor(req, res) {
 
         });
 
-        return res.status(200).json({ success: true, message: "Investor removed from shortlist successfully" });
+        return successResponse(res, {}, "Investor removed from shortlist successfully");
 
 
 
     } catch (error) {
 
         console.log(error.stack);
-        return res.status(500)
-            .json({
-                success: false,
-                error: "Internal Server Error"
-            })
+        return errorResponse(res);
 
     }
 }

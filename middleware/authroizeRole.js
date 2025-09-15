@@ -1,18 +1,20 @@
+import { errorResponse } from "../utils/response.js";
+
 export const authorizeRole = (requiredRole) => {
     return (req, res, next) => {
         try {
             if (!req.user || !req.user.role) {
-                return res.status(401).json({ error: "Unauthorized. No role found" });
+                return errorResponse(res, "Unauthorized. No role found", 401)
             }
 
             if (req.user.role !== requiredRole) {
-                return res.status(403).json({ error: "Access denied: Only startup can access this resource" });
+                return errorResponse(res, "Access Denied: Only startup can access this resource", 403)
             }
 
             next(); 
         } catch (error) {
             console.log(error);
-            return res.status(500).json({ error: "Internal server error in authorization middleware" });
+            return errorResponse(res, "Internal server error in authorization middleware")
         }
     };
 };

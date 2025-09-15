@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import Orders from "../models/order.js";
 import { callModel } from "../utils/callModel.js";
 import { success } from "zod";
+import { errorResponse, successResponse } from "../utils/response.js";
 
 
 
@@ -15,18 +16,11 @@ export async function sendOtp(req, res) {
     const { name, email, password, confirm_password, role, company_name } = req.body;
 
     if (!email || !name || !password || !confirm_password || !role || !company_name) {
-      return res.status(400).json({
-        success:false,
-        message: "Missing Fields",
-      })
+      return errorResponse(res, "Missing fields", 400);
     }
 
     if (password !== confirm_password) {
-      return res.status(400).json({
-        success:false,
-        message: "Password do not match"
-                
-      })
+      return errorResponse(res, "Password not matched", 401);
     }
 
     const query = qb().eq(User.fields.Email, email);
@@ -38,10 +32,7 @@ export async function sendOtp(req, res) {
     const UserExist = resources.length > 0 ? resources[0] : null;
 
     if (UserExist && UserExist.Status === "verified") {
-      return res.status(400).json({
-        success:false,
-        message: "User already Exists"
-      })
+      return errorResponse(res, "User already exist and verified", 409)
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000);
@@ -64,22 +55,15 @@ export async function sendOtp(req, res) {
     await otpQueue.add("send-otp", { email, otp });
 
     console.log("OTP job added to the queue");
-
-    return res.status(200)
-      .json({
-        success:true,
-        message: 'Otp will be sent to your email shortly'
-      })
+    
+      return successResponse(res,{},"Otp will be sent to your email shortly")
 
   } catch (error) {
 
     console.log(error.stack);
-    return res.status(500)
-    .json({ 
-      success:false,
-      message: "Internal server error" });
-      }
+    return errorResponse(res);
 
+}
 }
 export async function verifyOtp(req, res) {
   try {
@@ -87,10 +71,7 @@ export async function verifyOtp(req, res) {
     const { email, otp } = req.body;
 
     if (!email || !otp) {
-      return res.status(400).json({
-        success:false,
-        message: "Email and otp is required"
-      })
+      return errorResponse(res, "Email and otp required", 400);
     }
 
     const data = await redis.get(`otp:${email}`);
@@ -98,10 +79,7 @@ export async function verifyOtp(req, res) {
 
 
     if (!data) {
-      return res.status(400).json({
-        success:false,
-        message: "Otp not found or expired"
-      })
+      return errorResponse(res, "Otp not found or expired", 404);
     }
 
     const { otp: storedOtp, password: hashedPassword, name, role, company_name } = JSON.parse(data);
@@ -109,10 +87,7 @@ export async function verifyOtp(req, res) {
     const inputOtp = Number(otp);
 
     if (storedOtp !== inputOtp) {
-      return res.status(400).json({
-        success:false,
-        message: "Invalid otp"
-      })
+      return errorResponse(res, "Invalid otp", 401);
     }
 
     const newUser = await User.insert({
@@ -147,27 +122,18 @@ export async function verifyOtp(req, res) {
       maxAge: 10 * 24 * 60 * 60 * 1000,
     });
 
-
-    return res.status(201).json({
-      success:true,
-      message: "User registered and verified successfully",
+    return successResponse(res,{
       userId: newUser.id,
       UserRole:newUser.Role,
       token:token
-
-    })
+    }, "User registered and verified successfully", 201);
 
 
 
   } catch (error) {
 
     console.log(error.stack);
-    return res.status(500).json({
-      success:false,
-      message: "Internal server error"
-    })
-
-
+    return errorResponse(res);
   }
 }
 
@@ -176,10 +142,7 @@ export async function login(req, res) {
   try {
     const { email, password,role } = req.body;
     if (!email || !password || !role) {
-      return res.status(400).json({
-        success:false,
-        message: "Invalid request"
-      })
+      return errorResponse(res, "Invalid request", 400);
     }
 
     const query = qb().eq(User.fields.Email, email);
@@ -191,19 +154,13 @@ export async function login(req, res) {
     const user = userData.length > 0 ? userData[0] : null;
 
     if (user.Status !== "verified") {
-      return res.status(403).json({
-        success:false,
-        message: "User not verified. Please complete OTP verification.",
-      })
+      return errorResponse(res, "User status not verified", 403 )
     }
 
     const validPassword = await bcrypt.compare(password, user.Password);
 
     if (!validPassword) {
-      return res.status(400).json({
-        success:false,
-        message: "Password do not match",
-      })
+      return errorResponse(res, "Password do not match", 401);
     }
 
 
@@ -230,22 +187,14 @@ export async function login(req, res) {
   // signed: true,
     });
 
-    return res.status(200).json({
-      success:true,
-      message: "Login successful",
-      UserId: user.id,
+    return successResponse(res,{ UserId: user.id,
       Name: userData[0].Name,
       UserRole:user.Role,
-      token: token
-      
-    })
+      token: token}, "Login successfull")
 
   } catch (error) {
     console.log(error.stack);
-    return res.status(500)
-    .json({ 
-      success:false,
-      message: "Internal server error" });
+    return errorResponse(res);
 
   }
 }
@@ -260,23 +209,11 @@ export async function profileSetup(req, res) {
     const { Major_Sector, Minor_Sector, Series } = req.body;
 
     if (!Major_Sector || !Minor_Sector || !Series) {
-      return res.status(400)
-        .json({
-          success:false,
-          message: "Invalid Request"
-        })
+      return errorResponse(res, "Missing fields", 400);
     }
 
     const userId = req.user.id;
 
-    if (!userId) {
-      console.log(error);
-      return res.status(404)
-      .json({
-        success:false,
-        message:"User not found"
-      })
-    }
     // console.log(UserId);
     // console.log(Major_sector);
     // console.log(Minor_sector);
@@ -298,23 +235,18 @@ export async function profileSetup(req, res) {
     })
 
 
-    //console.log(response);
+    //console.log(response);    
 
-    return res.status(200).json({
-      success:true,
-      message: "Profile completed successfully",
+    return successResponse(res,{
       modelResponse: model,
       profile:response
-    })
+
+    }, "Profile completed successfully")
 
 
   } catch (error) {
     console.log(error.stack);
-    return res.status(500)
-      .json({
-        success:false,
-        message: "Internal Server Error"
-      })
+    return errorResponse(res);
 
   }
 }

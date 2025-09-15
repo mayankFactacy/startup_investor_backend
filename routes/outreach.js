@@ -2,8 +2,6 @@ import express from "express"
 import { authenticate } from "../middleware/authenticate.js";
 import { authorizeRole } from "../middleware/authroizeRole.js";
 import { addMessage, getAllShortlistInvestor, getChat, sendIntro } from "../controllers/outreachController.js";
-import Chats from "../models/chat.js";
-import { qb } from "@lakshya004/cosmos-odm";
 
 const router = express.Router();
 
