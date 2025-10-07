@@ -2,8 +2,6 @@ import { Model } from "@lakshya004/cosmos-odm";
 import z from "zod";
 import container from "../db.js";
 
-
-
 const mailChat = z.object({
     sender: z.enum([
         "Founder",
@@ -25,11 +23,9 @@ const chat = z.object({
     createdAt: z.date().optional(),
     updatedAt: z.date().optional()
 
-
 }).loose();
 
 const collection = await container.connectCollection("Groot-db", "Investor-chats");
 const Chats = new Model(chat, collection);
 
 export default Chats;
-

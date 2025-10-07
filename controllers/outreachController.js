@@ -40,7 +40,8 @@ export async function getAllShortlistInvestor(req, res) {
             return successResponse(res, {}, "No Investor shortlisted yet" );
         }
 
-        const investorid = shortListedInvestors[0].Investors[0].investorId
+        const shortlisted = shortListedInvestors[0].Investors || [];
+        const investorids = shortlisted.map(inv => inv.investorId)
 
         const { resources: investorData } = await Investors.find({
             fields: {
@@ -50,7 +51,7 @@ export async function getAllShortlistInvestor(req, res) {
                 Email: Investors.fields.Email
 
             },
-            filter: qb().eq(Investors.fields.id, investorid)
+            filter: qb().inArray(Investors.fields.id, investorids)
         })
 
         if (!investorData || investorData.length === 0) {
@@ -261,15 +262,14 @@ export async function getChat ( req, res){
         if(!chats || chats.length === 0){
             return errorResponse(res, "No chat found", 404);
         }
-
         
         return successResponse(res,{
             chats
-        })
-        
+        })        
     } catch (error) {
         console.log(error.stack);
-        return errorResponse(res);
-        
+        return errorResponse(res);        
     }
+
 }
+
